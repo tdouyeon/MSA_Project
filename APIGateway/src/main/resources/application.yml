@@ -1,0 +1,37 @@
+server:
+  port: 8000
+  ssl:
+    enabled: false
+
+spring:
+  r2dbc:
+    url: r2dbc:mariadb://localhost:3307/api_gateway
+    username: root
+    password: 1234
+
+  cloud:
+    gateway:
+      default-filters:
+        - name: RequestStatisticsFilter
+          args:
+            baseMessage: RequestStatisticsFilter
+            preLogger: true
+            postLogger: true
+      routes:
+        - id: weather
+          uri: http://localhost:8082/
+          predicates:
+            - Path=/weather/**
+          filters:
+            - RewritePath=/weather/(?<path>.*),/$\{path}
+        - id: webflux
+          uri: http://localhost:8081/
+          predicates:
+            - Path=/webflux/**
+          filters:
+            - RewritePath=/webflux/(?<path>.*),/$\{path}
+
+logging:
+  level:
+    org.springframework.r2dbc.core: debug
+

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>응답 속도 및 접속 수 그래프</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script
+          src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
+          integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer"
+  ></script>
+  <style>
+    .chart-container {
+      width: 50%;
+      height: 50%;
+      display: inline-block;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+<div class="chart-container">
+  <canvas id="responseChart" width="800" height="400"></canvas>
+</div>
+<div class="chart-container">
+  <canvas id="requestsChart" width="800" height="400"></canvas>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    $.ajax({
+      url: "/api/statistics",
+      method: "GET",
+      dataType: "json",
+      success: function (jsonData) {
+        updateChart(jsonData);
+      },
+      error: function (error) {
+        console.error("AJAX 요청 중 에러 발생:", error);
+      },
+    });
+  });
+
+  updateChart = (data) => {
+    // 사이트 path 그룹화
+    const groupedData = {};
+    data.forEach((entry) => {
+      const path = entry.path.split("/")[1]; // 첫 번째 슬래시 다음 경로 추출
+      if (!(path in groupedData)) {
+        groupedData[path] = [];
+      }
+      groupedData[path].push(entry);
+    });
+
+    // 시간별 응답 속도 통계
+    const timeLabels = data.map(
+      (entry) =>
+        entry.timestamp.split("T")[0] +
+        " " +
+        entry.timestamp.split("T")[1].split(".")[0]
+    );
+    const timeResponseData = data.map((entry) => entry.duration);
+
+    new Chart(document.getElementById("responseChart"), {
+      type: "line",
+      data: {
+        labels: timeLabels,
+        datasets: Object.keys(groupedData).map((key) => ({
+          label: `${key} 응답 속도`,
+          data: groupedData[key].map((entry) => entry.duration),
+          borderColor: randomPastelColor(), // 파스텔톤 랜덤 컬러
+          fill: false,
+        })),
+      },
+      options: {
+        title: {
+          display: true,
+          text: "시간별 응답 속도",
+        },
+      },
+    });
+
+    // 일별 접속자 수 통계
+    const dayLabels = [
+      ...new Set(data.map((entry) => entry.timestamp.split("T")[0])),
+    ];
+    const dayRequestData = dayLabels.map(
+      (day) =>
+        data.filter((entry) => entry.timestamp.startsWith(day)).length
+    );
+
+    new Chart(document.getElementById("requestsChart"), {
+      type: "bar",
+      data: {
+        labels: dayLabels,
+        datasets: Object.keys(groupedData).map((key) => ({
+          label: `${key} 접속 수`,
+          data: dayLabels.map(
+            (day) =>
+              groupedData[key].filter((entry) =>
+                entry.timestamp.startsWith(day)
+              ).length
+          ),
+          backgroundColor: randomPastelColor(), // 파스텔톤 랜덤 컬러
+        })),
+      },
+      options: {
+        title: {
+          display: true,
+          text: "일별 접속 수",
+        },
+        scales: {
+          yAxes: [
+            {
+              ticks: {
+                beginAtZero: true,
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    // 랜덤 파스텔톤 색상 생성 함수
+    function randomPastelColor() {
+      const hue = Math.floor(Math.random() * 360);
+      const pastel = "hsl(" + hue + ", 100%, 80%)";
+      return pastel;
+    }
+  };
+</script>
+</body>
+</html>

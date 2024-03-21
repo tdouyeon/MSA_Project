@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>API Gateway 모니터링</title>
+    <!-- Chart.js 추가 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <canvas id="myChart" width="800" height="400"></canvas>
+
+    <script>
+      // JSON 데이터
+      const jsonData = [
+        {
+          url: "first-service",
+          data: [
+            {
+              statusCode: 200,
+              timestamp: {
+                "2024-01-26 11:41": 1,
+              },
+            },
+          ],
+        },
+        {
+          url: "first-service",
+          data: [
+            {
+              statusCode: 304,
+              timestamp: {
+                "2024-01-26 11:44": 1,
+                "2024-01-26 11:45": 1,
+                "2024-01-26 11:57": 3,
+                "2024-01-26 12:12": 5,
+                "2024-01-26 12:21": 7,
+                "2024-01-26 13:05": 1,
+              },
+            },
+          ],
+        },
+        {
+          url: "sns",
+          data: [
+            {
+              statusCode: 200,
+              timestamp: {
+                "2024-01-26 14:19": 1,
+                "2024-01-26 14:29": 1,
+                "2024-01-26 14:30": 2,
+                "2024-01-26 14:31": 1,
+                "2024-01-26 14:39": 1,
+                "2024-01-26 14:40": 1,
+                "2024-01-26 14:47": 2,
+                "2024-01-26 14:48": 1,
+                "2024-01-26 14:49": 3,
+                "2024-01-26 14:50": 5,
+                "2024-01-26 14:51": 6,
+              },
+            },
+          ],
+        },
+        {
+          url: "sns",
+          data: [
+            {
+              statusCode: 304,
+              timestamp: {
+                "2024-01-26 14:19": 2,
+                "2024-01-26 14:21": 6,
+                "2024-01-26 14:31": 3,
+                "2024-01-26 14:32": 6,
+                "2024-01-26 14:33": 2,
+                "2024-01-26 14:34": 6,
+                "2024-01-26 14:35": 11,
+                "2024-01-26 14:37": 5,
+                "2024-01-26 14:38": 11,
+                "2024-01-26 14:39": 8,
+                "2024-01-26 14:40": 3,
+                "2024-01-26 14:43": 2,
+                "2024-01-26 14:45": 6,
+                "2024-01-26 14:47": 5,
+                "2024-01-26 14:48": 4,
+                "2024-01-26 14:49": 7,
+                "2024-01-26 14:50": 8,
+                "2024-01-26 14:51": 13,
+              },
+            },
+          ],
+        },
+        {
+          url: "sns",
+          data: [
+            {
+              statusCode: 404,
+              timestamp: {
+                "2024-01-26 14:27": 1,
+                "2024-01-26 14:28": 4,
+                "2024-01-26 14:32": 6,
+                "2024-01-26 14:33": 2,
+                "2024-01-26 14:34": 2,
+                "2024-01-26 14:35": 4,
+                "2024-01-26 14:37": 3,
+                "2024-01-26 14:38": 11,
+                "2024-01-26 14:39": 3,
+                "2024-01-26 14:47": 1,
+              },
+            },
+          ],
+        },
+        {
+          url: "sns",
+          data: [
+            {
+              statusCode: 302,
+              timestamp: {
+                "2024-01-26 14:33": 1,
+                "2024-01-26 14:39": 3,
+                "2024-01-26 14:48": 1,
+                "2024-01-26 14:49": 2,
+                "2024-01-26 14:50": 2,
+                "2024-01-26 14:51": 2,
+              },
+            },
+          ],
+        },
+      ];
+
+      jsonData.forEach(transformData);
+
+      // 결과 출력
+      const result = Object.values(transformedData);
+      console.log(JSON.stringify(result, null, 2));
+
+      const formatTimestamp = (timestamp) => {
+        const date = new Date(timestamp);
+        return (
+          date.getHours() +
+          ":" +
+          (date.getMinutes() < 10 ? "0" : "") +
+          date.getMinutes()
+        );
+      };
+
+      // Prepare data for Chart.js
+      const chartData = {
+        labels: [],
+        datasets: [],
+      };
+
+      // Iterate through JSON data
+      result.forEach((apiData) => {
+        const url = apiData.url;
+        const statusCode = apiData.statusCode;
+        const dataset = {
+          label: `${url} - ${statusCode}`,
+          data: [],
+        };
+
+        // Extract timestamp data
+        apiData.data[0].timestamp &&
+          Object.entries(apiData.data[0].timestamp).forEach(
+            ([timestamp, value]) => {
+              chartData.labels.push(formatTimestamp(new Date(timestamp)));
+              dataset.data.push(value);
+            }
+          );
+
+        chartData.datasets.push(dataset);
+      });
+
+      // Create a line chart
+      const ctx = document.getElementById("apiChart").getContext("2d");
+      new Chart(ctx, {
+        type: "line",
+        data: chartData,
+        options: {
+          scales: {
+            x: {
+              type: "category",
+              position: "bottom",
+            },
+            y: {
+              min: 0,
+            },
+          },
+        },
+      });
+    </script>
+  </body>
+</html>
